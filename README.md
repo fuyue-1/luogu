@@ -69,3 +69,39 @@ int main() {
 }
 ```
 reverse函数需要头文件algorithm,可用于string和vector
+# E. x 进制转 10 进制
+
+### 核心思路
+
+从高位到低位扫描字符串 `S`，用秦九韶算法（逐步累乘）把 `x` 进制数转换成十进制：
+
+```text
+ans = ans * x + 当前位的数值
+```
+### 核心代码
+
+```cpp
+#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    int x;
+    string s;
+    cin >> x >> s;
+
+    long long ans = 0;
+    for (char c : s) {
+        int d;
+        if (c >= '0' && c <= '9') {
+            d = c - '0';
+        } else {
+            d = c - 'A' + 10;
+        }
+        ans = ans * x + d;
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
