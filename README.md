@@ -105,3 +105,53 @@ int main() {
     return 0;
 }
 ```
+# H 质数筛选【1不是质数，i*i<=x】
+- 先建立 `isPrime` 数组。
+- 质数筛从 2 开始处理。
+
+
+### 参考代码
+
+```cpp
+#include <iostream>
+#include <vector>
+using namespace std;
+
+bool isPrime(int x) {
+    if (x < 2) {
+        return false;
+    }
+    for (int i = 2; i * i <= x; i++) {
+        if (x % i == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        if (isPrime(x)) {
+            cout << x << " ";
+        }
+    }
+
+    return 0;
+}
+```
+# I 旗鼓相当的对手【结构体】
+```cpp
+struct Student {
+    string name;
+    int chinese;
+    int math;
+    int english;
+    int total;
+};
+Student a[1005];
+```
