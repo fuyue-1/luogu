@@ -155,3 +155,57 @@ struct Student {
 };
 Student a[1005];
 ```
+# J 数字反转
+实数是**小数，分数，百分数，整数**
+看清逻辑，实则只有2种写法，一个是反转整数部分，一个是小数部分
+区别是删掉前置的0，还是后置的0
+```
+s.find('.')
+作用：在字符串 s 里面查找字符 .
+如果找到：返回小数点所在的下标（int）
+如果找不到：返回常量 string::npos
+
+string::npos 是 string 类内置静态常量，表示查找失败。
+本质是一个很大的无符号整数（一般为 4294967295）。
+```
+```cpp
+#include<iostream>
+#include<algorithm>
+#include<string>
+using namespace std;
+string reverseInt(string a){
+    int pos=0;
+    reverse(a.begin(),a.end());
+    while(pos+1<(int)a.size() && a[pos]=='0'){
+        pos++;
+    }
+    return a.substr(pos);
+}
+string reverseDeci(string b){
+    reverse(b.begin(),b.end());
+    while(b.size()>1 &&b.back()=='0'){
+        b.pop_back();
+    }
+    return b;
+}
+int main(){
+    string s;
+    cin>>s;
+    if(s.back()=='%'){
+        s.pop_back();
+        cout<<reverseInt(s)<<'%'<<endl;
+    }else if(s.find('.')!=string::npos){
+        int p=s.find('.');
+        string le=s.substr(0,p);
+        string ri=s.substr(p+1);
+        cout<<reverseInt(le)<<'.'<<reverseDeci(ri)<<endl;
+    }else if(s.find('/')!=string::npos){
+        int p=s.find('/');
+        string le=s.substr(0,p);
+        string ri=s.substr(p+1);
+        cout<<reverseInt(le)<<'/'<<reverseInt(ri)<<endl;
+    }else cout<<reverseInt(s)<<endl;
+    
+    return 0;
+}
+```
