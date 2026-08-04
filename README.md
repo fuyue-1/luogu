@@ -426,4 +426,76 @@ string decode() {
     return result;
 }
 ```
-  
+# P.2 的幂次展开【递归】
+逐位置看 n 的二进制第 i 位是不是 1
+格式的要求：
+1. $2^0$ →输出 `2(0)`
+2. $2^1$ →输出 `2`
+3. $2^k\ (k>1)$ →输出 `2(指数的表达式)`，指数 $k$ 自己也要递归拆解，调用`solve(i)`
+```cpp
+string solve(int n) {
+    string result;
+
+    for (int i = 15; i >= 0; i--) {
+        //取出第i位
+        if ((n >> i) & 1) {
+            string term;
+            if (i == 0) {
+                term = "2(0)";
+            } else if (i == 1) {
+                term = "2";
+            } else {
+                term = "2(" + solve(i) + ")";
+            }
+
+            if (!result.empty()) {
+                result += "+";
+            }
+            result += term;
+        }
+    }
+
+    return result;
+}
+```
+# Q.蛇形方针【方向数组】
+- 用二维数组保存答案。
+- 设置方向数组：右、下、左、上。
+- 每填入一个数后，尝试走到下一个位置。
+- 如果越界或已访问，则转向。
+```cpp
+int main() {
+    int n;
+    cin >> n;
+
+    int a[15][15] = {};
+    int d[4][2]={{0,1},{1,0},{0,-1},{-1,0}};
+
+    int x = 0, y = 0, dir = 0;
+    for (int num = 1; num <= n * n; num++) {
+        a[x][y] = num;
+
+        int nx = x + d[dir][0];
+        int ny = y + d[dir][1];
+
+        if (nx < 0 || nx >= n || ny < 0 || ny >= n || a[nx][ny] != 0) {
+            //让 d 永远限制在 0、1、2、3 之间循环，不会超出 dir 数组下标
+            dir = (dir + 1) % 4;
+            nx = x + d[dir][0];
+            ny = y + d[dir][1];
+        }
+
+        x = nx;
+        y = ny;
+    }
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << setw(3) << a[i][j];
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
+```

@@ -35,6 +35,7 @@ string solve(int n) {
     string result;
 
     for (int i = 15; i >= 0; i--) {
+        //取出第i位
         if ((n >> i) & 1) {
             string term;
             if (i == 0) {
