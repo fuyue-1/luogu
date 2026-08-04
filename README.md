@@ -499,3 +499,27 @@ int main() {
     return 0;
 }
 ```
+# R.天干地支
+- 准备天干数组和地支数组。
+- 选择题目给定的基准年份。
+- 计算年份差，并分别对 10 和 12 取模。
+- 注意负数取模时要转成非负结果。
+  
+```cpp
+int main() {
+    int year;
+    cin >> year;
+
+    string stem[] = {"jia", "yi", "bing", "ding", "wu",
+                     "ji", "geng", "xin", "ren", "gui"};
+    string branch[] = {"zi", "chou", "yin", "mao", "chen", "si",
+                       "wu", "wei", "shen", "you", "xu", "hai"};
+
+    //任何整数 %12，C++ 得到结果范围一定是：[-11 , 11]
+    int stemIndex = (6 + (year - 2020) % 10 + 10) % 10;
+    int branchIndex = (0 + (year - 2020) % 12 + 12) % 12;
+
+    cout << stem[stemIndex] << branch[branchIndex] << endl;
+    return 0;
+}
+```
