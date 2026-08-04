@@ -209,3 +209,221 @@ int main(){
     return 0;
 }
 ```
+# K.生日相遇问题
+```
+闰年是366天，2月29天
+int week1 = (firstWeekday + day1 - 1) % 7;
+```
+```cpp
+#include <iostream>
+using namespace std;
+//判断该年份是闰年还是平年
+bool isLeap(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+//算生日是该年份的 第几天
+int getDayOfYear(int month, int day, int year) {
+    int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (isLeap(year)) {
+        days[1] = 29;
+    }
+
+    if (month == 2 && day == 29 && !isLeap(year)) {
+        day = 28;
+    }
+
+    int result = 0;
+    for (int i = 0; i < month - 1; i++) {
+        result += days[i];
+    }
+    return result + day;
+}
+
+int main() {
+    int m, d1, n, d2, k;
+    cin >> m >> d1 >> n >> d2 >> k;
+    
+    int firstWeekday = 3; // 2025 年 1 月 1 日是星期三
+    bool found = false;
+
+    for (int year = 2025; year < 2025 + k; year++) {
+        int day1 = getDayOfYear(m, d1, year);
+        int day2 = getDayOfYear(n, d2, year);
+
+        //算生日是周几
+        int week1 = (firstWeekday + day1 - 1) % 7;
+        int week2 = (firstWeekday + day2 - 1) % 7;
+
+        if (week1 == week2) {
+            cout << year << endl;
+            found = true;
+        }
+        //// 用2025年的总天数(365/366)，推算2026年元旦的星期
+        firstWeekday = (firstWeekday + (isLeap(year) ? 366 : 365)) % 7;
+    }
+
+    if (!found) {
+        cout << "No Answer" << endl;
+    }
+
+    return 0;
+}
+```
+# L.文字处理软件
+**注意的是需要s改变，后续的s依靠前面的s的基础**
+**拼接，截取，插入，查找**
+```cpp
+    while (q--) {
+        int op;
+        cin >> op;
+
+        if (op == 1) {
+            string t;
+            cin >> t;
+            s += t;
+            cout << s << endl;
+        } else if (op == 2) {
+            int a, b;
+            cin >> a >> b;
+            s = s.substr(a, b);
+            cout << s << endl;
+        } else if (op == 3) {
+            int a;
+            string t;
+            cin >> a >> t;
+            s.insert(a, t);
+            cout << s << endl;
+        } else if (op == 4) {
+            string t;
+            cin >> t;
+            int pos = s.find(t);
+            cout << pos << endl;
+        }
+    }
+```
+# M.扫雷游戏
+重点是输出一行要换行，否则不通过，注意题目中**输出格式**
+```cpp
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    char a[105][105];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> a[i][j];
+        }
+    }
+
+    int dx[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    int dy[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (a[i][j] == '*') {
+                cout << '*';
+                continue;
+            }
+
+            int cnt = 0;
+            for (int k = 0; k < 8; k++) {
+                int x = i + dx[k];
+                int y = j + dy[k];
+                if (x >= 0 && x < n && y >= 0 && y < m && a[x][y] == '*') {
+                    cnt++;
+                }
+            }
+            cout << cnt;
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
+```
+# N.显示屏
+重点是理解显示逻辑，输出所有数字的第n行，再接着输入下一行
+```cpp
+int main() {
+    int n;
+    string s;
+    cin >> n >> s;
+
+    string digit[10][5] = {
+        {"XXX", "X.X", "X.X", "X.X", "XXX"},
+        {"..X", "..X", "..X", "..X", "..X"},
+        {"XXX", "..X", "XXX", "X..", "XXX"},
+        {"XXX", "..X", "XXX", "..X", "XXX"},
+        {"X.X", "X.X", "XXX", "..X", "..X"},
+        {"XXX", "X..", "XXX", "..X", "XXX"},
+        {"XXX", "X..", "XXX", "X.X", "XXX"},
+        {"XXX", "..X", "..X", "..X", "..X"},
+        {"XXX", "X.X", "XXX", "X.X", "XXX"},
+        {"XXX", "X.X", "XXX", "..X", "XXX"}
+    };
+    /*
+    XXX...X.XXX.XXX.X.X.XXX.XXX.XXX.XXX.XXX
+    X.X...X...X...X.X.X.X...X.....X.X.X.X.X
+    X.X...X.XXX.XXX.XXX.XXX.XXX...X.XXX.XXX
+    X.X...X.X.....X...X...X.X.X...X.X.X...X
+    XXX...X.XXX.XXX...X.XXX.XXX...X.XXX.XXX
+
+    */
+    for (int row = 0; row < 5; row++) {
+        for (int i = 0; i < n; i++) {
+            cout << digit[s[i] - '0'][row];
+            if (i != n - 1) {
+                cout << ".";
+            }
+        }
+        cout << endl;
+    }
+
+    return 0;
+}
+```
+
+# O.外星密码【递归】
+- 从左到右扫描字符串。
+- 遇到普通字符，直接加入当前答案。
+- 遇到 `[` 后，先跳过 `[`。
+- 读取 `[` 后面的数字，得到重复次数。
+- **递归**处理括号内部。
+- 遇到 `]` 表示当前递归层结束。
+- 返回解析出的字符串给上一层继续拼接。
+  
+**判断当前是否是数字isdigit(a)，即a是不是数字**
+注意pos++，可以跳过 ' [ ' , ' ]'
+```cpp
+string s;
+int pos = 0;
+
+string decode() {
+    string result;
+
+    while (pos < (int)s.size() && s[pos] != ']') {
+        if (s[pos] == '[') {
+            pos++; // 跳过 [
+
+            int times = 0;
+            while (pos < (int)s.size() && isdigit(s[pos])) {
+                times = times * 10 + s[pos] - '0';
+                pos++;
+            }
+
+            string inner = decode();
+            pos++; // 跳过 ]
+
+            while (times--) {
+                result += inner;
+            }
+        } else {
+            result += s[pos];
+            pos++;
+        }
+    }
+
+    return result;
+}
+```
+  

@@ -61,7 +61,7 @@ int main() {
             cout << year << endl;
             found = true;
         }
-
+        //// 用2025年的总天数(365/366)，推算2026年元旦的星期
         firstWeekday = (firstWeekday + (isLeap(year) ? 366 : 365)) % 7;
     }
 
