@@ -21,9 +21,10 @@
 - [T.验证排序序列](#t验证排序序列)
 - [U.队列安排](#u队列安排)
 - [V.美国血统](#v美国血统)
-- [W.最大公约数和最小公倍数问题](#w最大公约数和最小公倍数问题)
-- [X.查找](#x查找)
-- [Y.a-b数对](#ya-b数对)
+- [W.最大公约数和最小公倍数问题【gcd】](#w最大公约数和最小公倍数问题gcd)
+- [X.查找【题目规定下标从1开始，原数组有序-\>二分查找】](#x查找题目规定下标从1开始原数组有序-二分查找)
+  - [参考代码](#参考代码-1)
+- [Y.a-b数对【题目要求long long类型】](#ya-b数对题目要求long-long类型)
 - [Z.砍树](#z砍树)
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -744,7 +745,194 @@ int main() {
     return 0;
 }
 ```
-# W.最大公约数和最小公倍数问题
-# X.查找
-# Y.a-b数对
+# W.最大公约数和最小公倍数问题【gcd】
+若两个数的最大公约数为 `x`，最小公倍数为 `y`，则这两个数可以写成 `x * a` 和 `x * b`。此时需要满足：
+
+```text
+a * b = y / x
+gcd(a, b) = 1
+```
+- 如果 `y` 不能被 `x` 整除，则没有答案。
+- 枚举 `a`，令 `b = (y / x) / a`。
+- 只有 `a * b = y / x` 且 `gcd(a, b) = 1` 时才计数。
+- 注意有序数对和无序数对的统计方式要按题目要求处理。
+```cpp
+long long gcd(long long a, long long b) {
+    while (b != 0) {
+        long long t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+int main() {
+    long long x, y;
+    cin >> x >> y;
+
+    if (y % x != 0) {
+        cout << 0 << endl;
+        return 0;
+    }
+
+    long long n = y / x;
+    long long ans = 0;
+
+    for (long long a = 1; a * a <= n; a++) {
+        if (n % a != 0) {
+            continue;
+        }
+
+        long long b = n / a;
+        if (gcd(a, b) == 1) {
+            ans += (a == b ? 1 : 2);
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+# X.查找【题目规定下标从1开始，原数组有序->二分查找】
+**要求输出这个数字在序列中第一次出现的编号**
+- 二分时不要只判断是否存在，还要继续向左收缩，寻找第一次出现的位置。
+- 找不到时按题目要求输出指定值，常见为 `-1`。
+- 注意输出位置是从 0 开始还是从 1 开始。
+
+时间复杂度：O(q log n)  
+空间复杂度：O(1)
+
+## 参考代码
+
+```cpp
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<int> a(n + 1);
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    while (m--) {
+        int x;
+        cin >> x;
+
+        int left = 1;
+        int right = n;
+        int ans = -1;
+
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (a[mid] >= x) {
+                if (a[mid] == x) {
+                    ans = mid;
+                }
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+
+        cout << ans << " ";
+    }
+
+    return 0;
+}
+```
+# Y.a-b数对【题目要求long long类型】
+**typedef long long LL;**
+
+题目要求统计满足 `A - B = C` 的数对数量。可以将式子转化为查找 `A - C` 是否出现过。
+
+
+- 使用哈希表统计每个数出现的次数。
+- 遍历每个数 `A`，答案加上 `A - C` 的出现次数。
+- 注意重复数字会产生多个数对，不能只判断是否存在。
+
+
+时间复杂度：O(n) 或 O(n log n)  
+空间复杂度：O(n)
+
+```cpp
+int main() {
+    int n;
+    long long c;
+    cin >> n >> c;
+
+    vector<long long> a(n);
+    unordered_map<long long, long long> cnt;
+
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        cnt[a[i]]++;
+    }
+
+    long long ans = 0;
+    for (int i = 0; i < n; i++) {
+        ans += cnt[a[i] - c];
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+
 # Z.砍树
+砍树高度越低，得到的木材越多；砍树高度越高，得到的木材越少。因此答案具有单调性，可以二分砍树高度。
+
+
+- 二分范围为 `0` 到最高树高。
+- 对于一个高度 `mid`，计算所有树超过 `mid` 的部分总和。
+- 如果得到的木材不少于目标值，说明高度还可以更高。
+- 否则高度需要降低。
+- 最后输出满足条件的最大高度。
+
+
+时间复杂度：O(n log H)  
+空间复杂度：O(1)
+
+
+```cpp
+int main() {
+    int n;
+    long long m;
+    cin >> n >> m;
+
+    vector<long long> tree(n);
+    long long maxHeight = 0;
+
+    for (int i = 0; i < n; i++) {
+        cin >> tree[i];
+        if (tree[i] > maxHeight) {
+            maxHeight = tree[i];
+        }
+    }
+
+    long long left = 0;
+    long long right = maxHeight;
+    long long ans = 0;
+
+    while (left <= right) {
+        long long mid = (left + right) / 2;
+        long long wood = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (tree[i] > mid) {
+                wood += tree[i] - mid;
+            }
+            //max(0,tree[i]-mid),0是 long long类型的
+        }
+
+        if (wood >= m) {
+            ans = mid;
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
