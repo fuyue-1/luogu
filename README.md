@@ -523,3 +523,198 @@ int main() {
     return 0;
 }
 ```
+# S.后缀表达式
+**注意这个题 是后出的数字是先进来的，作为被除数和被减数**
+- 数字可能不止一位，要完整读入。
+- 遇到运算符时，注意两个操作数的顺序。
+- 对于减法和除法，先弹出的数是右操作数。
+- 表达式结束后，栈顶就是最终答案。
+```cpp
+int main() {
+    stack<int> st;
+    char ch;
+
+    while (cin >> ch && ch != '@') {
+        if (ch >= '0' && ch <= '9') {
+            int num = ch - '0';
+            while (cin >> ch && ch >= '0' && ch <= '9') {
+                num = num * 10 + ch - '0';
+            }
+            st.push(num);
+        } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/') {
+            //后进来的在顶端
+            //注意别弄错顺序了
+            int b = st.top();
+            st.pop();
+
+            int a = st.top();
+            st.pop();
+
+            if (ch == '+') {
+                st.push(a + b);
+            } else if (ch == '-') {
+                st.push(a - b);
+            } else if (ch == '*') {
+                st.push(a * b);
+            } else {
+                st.push(a / b);
+            }
+        }
+    }
+
+    cout << st.top() << endl;
+    return 0;
+}
+```
+# T.验证排序序列
+- 用一个指针表示当前要匹配的目标元素。
+- 按顺序把元素压入栈。
+- 每次压栈后，尽可能弹出与目标序列匹配的元素。
+- 最后如果所有目标元素都能匹配，说明序列合法。
+```cpp
+bool check(const vector<int>& in, const vector<int>& out) {
+    stack<int> st;
+    int j = 0;
+
+    for (int x : in) {
+        st.push(x);
+        while (!st.empty() && j < (int)out.size() && st.top() == out[j]) {
+            st.pop();
+            j++;
+        }
+    }
+
+    return j == (int)out.size();
+}
+
+int main() {
+    int q;
+    cin >> q;
+
+    while (q--) {
+        int n;
+        cin >> n;
+
+        vector<int> in(n), out(n);
+        for (int i = 0; i < n; i++) {
+            cin >> in[i];
+        }
+        for (int i = 0; i < n; i++) {
+            cin >> out[i];
+        }
+
+        cout << (check(in, out) ? "Yes" : "No") << endl;
+    }
+
+    return 0;
+}
+```
+# U.队列安排
+**难点在于用两个数组来模拟双向链表**
+维护每个人左右两边的人，相当于用数组模拟双向链表。插入时修改相邻关系，删除时把该节点从链表中断开。
+- `left[i]` 表示 i 左边的人，`right[i]` 表示 i 右边的人。
+- 插入到某人左边或右边时，要同时修改前后节点的指针。
+- 删除某人时，如果已经删除过就跳过。
+- 最后从队头开始沿 `right` 输出队列。
+```cpp
+/*
+使用0 作为虚拟哨兵，构建环形双向链表；真实节点 1~n。
+逐个插入节点：输入 k、p，把新节点插到 k 左边 / 右边。
+m 次删除：删除指定编号节点，重复删除直接跳过。
+从哨兵往后遍历链表，输出剩下所有节点编号。
+*/
+const int MAXN = 100005;
+
+int leftNode[MAXN], rightNode[MAXN];
+bool removed[MAXN];
+
+void insertBetween(int l, int r, int x) {
+    rightNode[l] = x;
+    leftNode[x] = l;
+    rightNode[x] = r;
+    leftNode[r] = x;
+}
+
+int main() {
+    int n;
+    cin >> n;
+
+    rightNode[0] = 1;
+    leftNode[0] = 1;
+    leftNode[1] = 0;
+    rightNode[1] = 0;
+
+    for (int i = 2; i <= n; i++) {
+        int k, p;
+        cin >> k >> p;
+
+        if (p == 0) {
+            insertBetween(leftNode[k], k, i);
+        } else {
+            insertBetween(k, rightNode[k], i);
+        }
+    }
+
+    int m;
+    cin >> m;
+    while (m--) {
+        int x;
+        cin >> x;
+        //removed[x]判断：如果已经删过，直接跳过，防止重复删除。标记为已删除。
+        if (removed[x]) {
+            continue;
+        }
+        removed[x] = true;
+
+        int l = leftNode[x];
+        int r = rightNode[x];
+        rightNode[l] = r;
+        leftNode[r] = l;
+    }
+    //初始化：int i = rightNode[0];
+    //循环条件：i != 0;
+    //每次循环结束执行：i = rightNode[i];
+
+    // rightNode[x]存 x 的后继，也就是 x 的下一个节点编号
+    for (int i = rightNode[0]; i != 0; i = rightNode[i]) {
+        cout << i << " ";
+    }
+
+    return 0;
+}
+```
+# V.美国血统
+- 前序遍历的第一个字符是当前子树根节点。
+- 在中序遍历中找到根节点，左边是左子树，右边是右子树。
+- 递归处理左子树和右子树。
+- 后序遍历输出顺序是：左子树、右子树、根节点。
+```cpp
+void buildPostorder(string preorder, string inorder) {
+    if (preorder.empty()) {
+        return;
+    }
+
+    char root = preorder[0];
+    int pos = inorder.find(root);
+
+    string leftIn = inorder.substr(0, pos);
+    string rightIn = inorder.substr(pos + 1);
+
+    string leftPre = preorder.substr(1, leftIn.size());
+    string rightPre = preorder.substr(1 + leftIn.size());
+
+    buildPostorder(leftPre, leftIn);
+    buildPostorder(rightPre, rightIn);
+    cout << root;
+}
+
+int main() {
+    string inorder, preorder;
+    cin >> inorder >> preorder;
+
+    buildPostorder(preorder, inorder);
+    cout << endl;
+
+    return 0;
+}
+```

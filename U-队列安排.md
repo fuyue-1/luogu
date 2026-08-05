@@ -26,7 +26,7 @@ const int MAXN = 100005;
 
 int leftNode[MAXN], rightNode[MAXN];
 bool removed[MAXN];
-
+// 在 l 和 r 两个节点中间插入新节点x
 void insertBetween(int l, int r, int x) {
     rightNode[l] = x;
     leftNode[x] = l;
@@ -37,12 +37,12 @@ void insertBetween(int l, int r, int x) {
 int main() {
     int n;
     cin >> n;
-
+    //初始化链表：一开始只有节点 1，哨兵 0 和 1 互相指向，形成一个环
     rightNode[0] = 1;
     leftNode[0] = 1;
     leftNode[1] = 0;
     rightNode[1] = 0;
-
+    //依次插入 2~n 号节点
     for (int i = 2; i <= n; i++) {
         int k, p;
         cin >> k >> p;
