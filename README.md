@@ -32,6 +32,8 @@
 - [B. 合并果子【小根堆，priority\_queue】](#b-合并果子小根堆priority_queue)
 - [C. 语文成绩【差分数组】](#c-语文成绩差分数组)
 - [D. 地毯【二维差分】](#d-地毯二维差分)
+- [E. 最大加权矩形【降维】](#e-最大加权矩形降维)
+- [F. 木材加工【二分】](#f-木材加工二分)
 # 语法基础题
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -1111,11 +1113,8 @@ int main() {
 }
 ```
 # D. 地毯【二维差分】
-
 给出一个 `n * n` 的网格和若干次铺地毯操作，每次覆盖一个矩形区域，要求输出每个位置被覆盖的次数。
-
 可以使用**二维差分**。对矩形 `(x1, y1)` 到 `(x2, y2)` 加 `1`：
-
 ```text
 d[x1][y1] += 1
 d[x2 + 1][y1] -= 1
@@ -1155,6 +1154,102 @@ int main() {
         }
         cout << endl;
     }
+    return 0;
+}
+```
+# E. 最大加权矩形【降维】
+求矩阵中权值和最大的子矩形，可以枚举子矩形的上下边界，把二维问题压缩成一维最大子段和问题。**固定上下两行，把每一列纵向加起来得到一维数组。一维数组的连续区间，对应原矩阵的一个矩形**
+
+固定上边界 `top` 和下边界 `bottom` 后，每一列在这两行之间的和可以看作一个一维数组。此时问题变成求这个数组的最大连续子段和。
+
+- 枚举上边界 `top`。
+- 用数组 `col[j]` 维护从 `top` 到当前 `bottom` 第 `j` 列的和。
+- 每增加一行 `bottom`，更新 `col`。
+- 对 `col` 做一次最大子段和。
+
+```cpp
+const int N = 105;
+int a[N][N], col[N];
+
+int main() {
+    int n;
+    cin >> n;
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            cin >> a[i][j];
+        }
+    }
+
+    int ans = -1e9;
+
+    for (int top = 1; top <= n; top++) {
+        //换新的上边，列和全部清零
+        for (int j = 1; j <= n; j++) {
+            col[j] = 0;
+        }
+        //bottom从top往下一行一行增加
+        for (int bottom = top; bottom <= n; bottom++) {
+            //把bottom这一行加到col数组
+            for (int j = 1; j <= n; j++) {
+                col[j] += a[bottom][j];
+            }
+
+            int cur = col[1];
+            ans = max(ans, cur);
+            for (int j = 2; j <= n; j++) {
+                //二选一：要么接上前面一段，要么从当前重新开始
+                cur = max(col[j], cur + col[j]);
+                ans = max(ans, cur);
+            }
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+# F. 木材加工【二分】
+给若干根木材，要切出至少 `k` 段长度相同的小木段，长度尽可能大。
+**答案具有单调性**：如果长度 `x` 可以切出至少 `k` 段，那么更短的长度也一定可以；如果长度 `x` 不可以，那么更长的长度也不可以。
+
+因此可以二分答案。
+
+- 二分小木段长度 `mid`。
+- 统计所有木材能切出多少段 `len[i] / mid`。
+- 如果总段数不少于 `k`，说明 `mid` 可行，尝试更大。
+- 否则尝试更小。
+
+```cpp
+int main() {
+    int n, k;
+    cin >> n >> k;
+
+    vector<int> a(n);
+    int mx = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+        mx = max(mx, a[i]);
+    }
+
+    int l = 1, r = mx, ans = 0;
+    while (l <= r) {
+        int mid = (l + r) / 2;
+        long long cnt = 0;
+
+        for (int x : a) {
+            cnt += x / mid;
+        }
+
+        if (cnt >= k) {
+            ans = mid;
+            l = mid + 1;
+        } else {
+            r = mid - 1;
+        }
+    }
+
+    cout << ans << endl;
     return 0;
 }
 ```
