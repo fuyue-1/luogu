@@ -29,7 +29,9 @@
 - [Z.砍树](#z砍树)
 - [数据结构方面题库](#数据结构方面题库)
 - [A.凌乱的yyy / 线段覆盖](#a凌乱的yyy--线段覆盖)
-- [B. 合并果子](#b-合并果子)
+- [B. 合并果子【小根堆，priority\_queue】](#b-合并果子小根堆priority_queue)
+- [C. 语文成绩【差分数组】](#c-语文成绩差分数组)
+- [D. 地毯【二维差分】](#d-地毯二维差分)
 # 语法基础题
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -987,13 +989,12 @@ int main() {
     return 0;
 }
 ```
-# B. 合并果子
+# B. 合并果子【小根堆，priority_queue】
 
 每次合并两堆果子，消耗为两堆重量之和。为了让总代价最小，每次都应该选择当前最小的两堆合并。
 
 这就是哈夫曼合并问题，可以用小根堆维护所有果子堆。
 
-**要点**
 - 将所有果子重量放入小根堆。
 - 每次取出最小的两个数 `x` 和 `y`。
 - 答案加上 `x + y`。
@@ -1031,6 +1032,129 @@ int main() {
     }
 
     cout << ans << endl;
+    return 0;
+}
+```
+# C. 语文成绩【差分数组】
+
+这类题通常是区间加法后查询最终最小值，可以用**差分数组**优化。
+
+设原数组为 `a`，差分数组为 `d`：
+
+```text
+d[i] = a[i] - a[i - 1]
+```
+
+如果要给区间 `[l, r]` 全部加上 `x`，只需要：
+
+```text
+d[l] += x
+d[r + 1] -= x
+```
+
+最后对差分数组求前缀和，就能还原修改后的成绩。
+
+**要点**
+
+- 读入原成绩时建立差分数组。
+- 每次区间修改只改两个位置。
+- 所有操作结束后求前缀和。
+- 扫描得到最终最小成绩。
+```cpp
+//暴力写法会超时
+int main(){
+    int n,p; cin>>n>>p;
+    vector<int> a(n+1);
+    for(int i=1;i<=n;i++) cin>>a[i];
+    
+    while(p--){
+        int x,y,z;
+        cin>>x>>y>>z;
+        for(int i=x;i<=y;i++) a[i]=min(100,a[i]+z);
+    }
+    cout<<*min_element(a.begin()+1,a.end())<<endl;
+    return 0;
+}
+```
+```cpp 
+//正确写法，重点就是利用  差分 来避免暴力解法
+const int N = 5000005;
+long long d[N];
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    long long last = 0;
+    for (int i = 1; i <= n; i++) {
+        long long x;
+        cin >> x;
+        d[i] = x - last;
+        last = x;
+    }
+
+    while (m--) {
+        int l, r;
+        long long x;
+        cin >> l >> r >> x;
+        d[l] += x;
+        d[r + 1] -= x;
+    }
+    //求前缀和
+    long long cur = 0;
+    long long ans = 1e18;
+    for (int i = 1; i <= n; i++) {
+        cur += d[i];
+        ans = min(ans, cur);
+    }
+    cout << ans << endl;
+    return 0;
+}
+```
+# D. 地毯【二维差分】
+
+给出一个 `n * n` 的网格和若干次铺地毯操作，每次覆盖一个矩形区域，要求输出每个位置被覆盖的次数。
+
+可以使用**二维差分**。对矩形 `(x1, y1)` 到 `(x2, y2)` 加 `1`：
+
+```text
+d[x1][y1] += 1
+d[x2 + 1][y1] -= 1
+d[x1][y2 + 1] -= 1
+d[x2 + 1][y2 + 1] += 1
+```
+
+最后对二维差分求前缀和，即可得到每个点的覆盖次数。
+
+- 建立二维差分数组。
+- 每次矩形修改**只改四个角**。
+- 最后用二维前缀和还原答案。
+
+```cpp
+const int N = 1005;
+int d[N][N];
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    while (m--) {
+        int x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        d[x1][y1]++;
+        d[x2 + 1][y1]--;
+        d[x1][y2 + 1]--;
+        d[x2 + 1][y2 + 1]++;
+    }
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            d[i][j] += d[i - 1][j] + d[i][j - 1] - d[i - 1][j - 1];
+            if (j > 1) {
+                cout << ' ';
+            }
+            cout << d[i][j];
+        }
+        cout << endl;
+    }
     return 0;
 }
 ```
