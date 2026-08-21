@@ -42,6 +42,7 @@
 - [L. 修复公路【Kruskal + 并查集】【\*\*】](#l-修复公路kruskal--并查集)
 - [M. 选数【dfs，剪枝】](#m-选数dfs剪枝)
 - [N. 迷宫【 dfs，二维dir\[4\]\[4\] 】](#n-迷宫-dfs二维dir44-)
+- [O. 马的遍历【BFS+队列】](#o-马的遍历bfs队列)
 # 语法基础题
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -1708,6 +1709,70 @@ int main() {
     vis[sx][sy] = true;
     dfs(sx, sy);
     cout << ans << endl;
+
+    return 0;
+}
+```
+# O. 马的遍历【BFS+队列】
+
+马在棋盘上有 8 种跳法，每次跳一步。要求从起点出发，到达棋盘上每个位置的最少步数。（**象棋的马走“日” 字：横向走 2 格纵向走 1 格，或者横向走 1 格纵向走 2 格。全部合法跳法一共 8 种组合**）
+
+因为每次移动代价相同，所以使用 BFS。第一次访问到某个格子时，得到的就是最短步数。
+- 初始化所有位置距离为 `-1`。
+- 起点距离为 `0`。
+- BFS 扩展 8 个方向。
+- 没访问过且在棋盘内的位置入队。
+
+```cpp
+const int N = 405;
+
+int dist[N][N];
+int dx[8] = {-2, -2, -1, -1, 1, 1, 2, 2};
+int dy[8] = {-1, 1, -2, 2, -2, 2, -1, 1};
+
+int main() {
+    int n, m, sx, sy;
+    cin >> n >> m >> sx >> sy;
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            dist[i][j] = -1;
+        }
+    }
+
+    queue<pair<int, int>> q;
+    q.push({sx, sy});
+    dist[sx][sy] = 0;
+
+    while (!q.empty()) {
+        auto cur = q.front();
+        q.pop();
+
+        int x = cur.first;
+        int y = cur.second;
+
+        for (int i = 0; i < 8; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+
+            if (nx < 1 || nx > n || ny < 1 || ny > m) {
+                continue;
+            }
+            if (dist[nx][ny] != -1) {
+                continue;
+            }
+
+            dist[nx][ny] = dist[x][y] + 1;
+            q.push({nx, ny});
+        }
+    }
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            cout << left << setw(5) << dist[i][j];
+        }
+        cout << endl;
+    }
 
     return 0;
 }
