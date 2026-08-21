@@ -13,19 +13,8 @@
 - BFS 扩展 8 个方向。
 - 没访问过且在棋盘内的位置入队。
 
-## 复杂度
-
-时间复杂度：`O(nm)`  
-空间复杂度：`O(nm)`
-
-## 参考代码
 
 ```cpp
-#include <iomanip>
-#include <iostream>
-#include <queue>
-using namespace std;
-
 const int N = 405;
 
 int dist[N][N];
