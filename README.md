@@ -44,6 +44,9 @@
 - [N. 迷宫【 dfs，二维dir\[4\]\[4\] 】](#n-迷宫-dfs二维dir44-)
 - [O. 马的遍历【BFS+队列】](#o-马的遍历bfs队列)
 - [P. Corn Maze S【bfs,最短路】](#p-corn-maze-sbfs最短路)
+- [Q. 郁闷的记者【图论，拓扑排序】](#q-郁闷的记者图论拓扑排序)
+  - [参考代码](#参考代码-2)
+- [R. 菜肴制作【拓扑排序，邻接表+入度数组+优先队列（堆）】](#r-菜肴制作拓扑排序邻接表入度数组优先队列堆)
 # 语法基础题
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -1874,6 +1877,157 @@ int main() {
     }
     //BFS 保证第一次抵达终点就是最短距离，直接输出终点的 dist。
     cout << dist[tx][ty] << endl;
+    return 0;
+}
+```
+# Q. 郁闷的记者【图论，拓扑排序】
+给出若干场比赛结果：如果 `x` 能打败 `y`，那么 `x` 的排名必须在 `y` 前面。
+这就是一个有向图拓扑排序问题：
+x -> y 表示 `x` 必须排在 `y` 前面。
+```
+拓扑排序是针对有向无环图 (DAG)的一种顶点排序算法。
+前提条件：图里面**不能有环**。如果出现环，拓扑排序不存在。
+通俗解释:
+图里面有若干点，有向边 `A → B` 的含义：A 这件事必须排在 B 前面完成。
+拓扑排序就是把所有顶点排成一个线性序列，让图中每一条有向边 `u→v`，在序列里面**u 一定出现在 v 的前面**。
+```
+拓扑排序得到的顺序就是一种合法排名。
+
+同时还要判断是否存在另一种合法排名。判断方法是：在拓扑排序过程中，如果某一时刻入度为 `0` 的点不止一个，那么当前可以选择多个队伍放到下一名，说明排名不唯一。
+
+- 建立有向图，边 `x -> y` 表示 `x` 排在 `y` 前。
+- 统计每个点的入度。
+- 将所有**入度**为 `0` 的点放入队列。
+- 每次取出一个点作为当前排名。
+- 如果某次取点前队列大小大于 `1`，说明存在多种排名，最后输出 `1`。
+- 如果整个过程中队列大小始终不超过 `1`，说明排名唯一，最后输出 `0`。
+
+## 参考代码
+
+```cpp
+int main() {
+    int n, m;
+    cin >> n;
+    cin >> m;
+    //g是邻接表
+    vector<vector<int>> g(n + 1);
+    vector<int> indeg(n + 1, 0);
+
+    for (int i = 0; i < m; i++) {
+        int x, y;
+        cin >> x >> y;
+        g[x].push_back(y);
+        indeg[y]++;
+    }
+
+    queue<int> q;
+    for (int i = 1; i <= n; i++) {
+        if (indeg[i] == 0) {
+            q.push(i);
+        }
+    }
+
+    vector<int> ans;
+    //是否唯一解法
+    bool notUnique = false;
+
+    while (!q.empty()) {
+        if (q.size() > 1) {
+            notUnique = true;
+        }
+
+        int u = q.front();
+        q.pop();
+        ans.push_back(u);
+
+        for (int v : g[u]) {
+            indeg[v]--;
+            if (indeg[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+
+    for (int x : ans) {
+        cout << x << endl;
+    }
+
+    cout << (notUnique ? 1 : 0) << endl;
+    return 0;
+}
+```
+# R. 菜肴制作【拓扑排序，邻接表+入度数组+优先队列（堆）】
+这题本质是拓扑排序。题目给出若干先后关系，要求构造一个合法顺序，并且尽量让编号小的菜更靠前。
+
+常见做法是**反向建图，然后用大根堆做拓扑排序，最后将结果反转**。
+这样可以在满足限制的前提下，让最终序列字典序尽量小。
+
+- 对限制 `x` 在 `y` 前，**反向建边 `y -> x`**。
+- 统计反向图入度。
+- 把入度为 `0` 的点放入**大根堆**。
+- **每次取编号最大的点**。
+- **得到的序列最后反转输出**。
+- 如果无法处理所有点，说明有环，输出 `Impossible`。
+```text
+默认 priority_queue<int> → 大根堆：堆顶永远是集合里数字最大的。
+priority_queue<int,vector<int>,greater<int>> → 小根堆：堆顶永远是集合里数字最小的。
+```
+| 做法 | 建图方式 | 用什么容器 | 得到什么结果 |
+| ---- | -------- | ---------- | ------------ |
+| 普通 Kahn 拓扑 | 正向建边 A→B | `queue<int>` 普通队列 | 任意一个合法拓扑，顺序看入队时机，不保证大小 |
+| 字典序最小拓扑 | 正向建边 A→B | 小根堆 | 字典序最小拓扑序列 |
+| HNOI 菜肴制作 | 反向建边 B→A | 大根堆，最后反转 ans | 全局让小编号尽量靠前（不是字典序最小） |
+
+```cpp
+int main() {
+    int T;
+    cin >> T;
+
+    while (T--) {
+        int n, m;
+        cin >> n >> m;
+
+        vector<vector<int>> g(n + 1);
+        vector<int> indeg(n + 1, 0);
+
+        for (int i = 0; i < m; i++) {
+            int x, y;
+            cin >> x >> y;
+            g[y].push_back(x);
+            indeg[x]++;
+        }
+
+        priority_queue<int> q;
+        for (int i = 1; i <= n; i++) {
+            if (indeg[i] == 0) {
+                q.push(i);
+            }
+        }
+
+        vector<int> ans;
+        while (!q.empty()) {
+            int u = q.top();
+            q.pop();
+            ans.push_back(u);
+
+            for (int v : g[u]) {
+                indeg[v]--;
+                if (indeg[v] == 0) {
+                    q.push(v);
+                }
+            }
+        }
+
+        if ((int)ans.size() != n) {
+            cout << "Impossible!" << endl;
+        } else {
+            for (int i = n - 1; i >= 0; i--) {
+                cout << ans[i] << ' ';
+            }
+            cout << endl;
+        }
+    }
+
     return 0;
 }
 ```
