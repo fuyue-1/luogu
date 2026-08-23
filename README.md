@@ -47,6 +47,10 @@
 - [Q. 郁闷的记者【图论，拓扑排序】](#q-郁闷的记者图论拓扑排序)
   - [参考代码](#参考代码-2)
 - [R. 菜肴制作【拓扑排序，邻接表+入度数组+优先队列（堆）】](#r-菜肴制作拓扑排序邻接表入度数组优先队列堆)
+- [S. 邮递员送信【图论，邻接表+优先队列（小根堆），正向表+反向表】](#s-邮递员送信图论邻接表优先队列小根堆正向表反向表)
+- [T. 最短路计数【图论，BFS】](#t-最短路计数图论bfs)
+- [U. 灾后重建【图论，最短路，Floyd算法】](#u-灾后重建图论最短路floyd算法)
+- [V. 繁忙的都市【最小生成树问题+Kruskal+并查集】(\*\*)](#v-繁忙的都市最小生成树问题kruskal并查集)
 # 语法基础题
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -2028,6 +2032,283 @@ int main() {
         }
     }
 
+    return 0;
+}
+```
+# S. 邮递员送信【图论，邻接表+优先队列（小根堆），正向表+反向表】
+**竞赛习惯：图论最短路，距离直接上 long long，避免边界溢出问题。**
+邮递员从 `1` 出发给所有点送信，最后还要回到 `1` 号点。图是**有向图**，所以从 `1` 到各点的距离和各点回到 `1` 的距离不一定相同。
+|容器|插入|取头部/顶端元素|删除|关键备注|
+|---|---|---|---|---|
+|vector 动态数组|`push_back()`|`front()`（头部）<br>`back()`（尾部）|`pop_back()`|无`push()`、无`pop()`；仅能删除尾部元素|
+|queue 普通队列|`push()`|`front()`|`pop()`|先进先出FIFO；pop只删除，不返回元素|
+|priority_queue 优先队列(堆)|`push()`|`top()`|`pop()`|优先级最高元素在堆顶；pop只删除，不返回元素|
+|stack 栈|`push()`|`top()`|`pop()`|后进先出LIFO；**没有`front()`**；pop只删除，不返回元素|
+
+可以做两次最短路：
+- 在**原图**上从 `1` 跑 Dijkstra，得到 `1 -> i` 的最短路。
+- 在**反图**上从 `1` 跑 Dijkstra，得到 `i -> 1` 的最短路。
+
+答案是所有点往返距离之和。
+- 建原图和反图。
+- 分别跑一次 Dijkstra。
+- 累加 `dist1[i] + dist2[i]`。
+
+```cpp
+const long long INF = 1e18;
+//Edge 代表一条边，多了权重这一含义
+struct Edge {
+    int to, w;
+};
+//返回 dist 数组：dist [i] 代表起点 s 到 i 的最短距离。
+vector<long long> dijkstra(int s, vector<vector<Edge>>& g) {
+    int n = g.size() - 1;
+    vector<long long> dist(n + 1, INF);
+    priority_queue<pair<long long, int>, vector<pair<long long, int>>, greater<pair<long long, int>>> q;
+
+    dist[s] = 0;
+    q.push({0, s});
+
+    while (!q.empty()) {
+        auto cur = q.top();
+        q.pop();
+
+        long long d = cur.first;
+        int u = cur.second;
+        //同一个结点可能被多次压入堆，堆里存了旧的更大距离，`dist[u]`保存的是已经确认的最短路，如果取出的 d 不等于 dist [u]，直接跳过这条失效记录。
+        if (d != dist[u]) {
+            continue;
+        }
+        //更新邻接点最短距离，把新状态压入优先队列。
+        for (auto e : g[u]) {
+            if (dist[e.to] > dist[u] + e.w) {
+                dist[e.to] = dist[u] + e.w;
+                q.push({dist[e.to], e.to});
+            }
+        }
+    }
+
+    return dist;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<vector<Edge>> g(n + 1), rg(n + 1);
+
+    for (int i = 0; i < m; i++) {
+        int x, y, z;
+        cin >> x >> y >> z;
+        
+        g[x].push_back({y, z});//原图 x→y
+        rg[y].push_back({x, z});//反图 y→x，边权不变
+    }
+
+    vector<long long> go = dijkstra(1, g);
+    vector<long long> back = dijkstra(1, rg);
+
+    long long ans = 0;
+    for (int i = 2; i <= n; i++) {
+        ans += go[i] + back[i];
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+# T. 最短路计数【图论，BFS】
+在**无权图**中，从 `1` 号点到其他点的**最短路**可以用 BFS 求出。同时可以统计最短路条数。
+
+当从 `u` 走到 `v` 时：
+
+- 如果 `v` 第一次被访问，说明找到它的最短路，`cnt[v] = cnt[u]`。
+- 如果 `dist[v] == dist[u] + 1`，说明又找到一条到 `v` 的最短路，累加 `cnt[u]`。
+- `dist[i]` 表示从 `1` 到 `i` 的最短距离。
+- `cnt[i]` 表示从 `1` 到 `i` 的最短路条数。
+- BFS 从 `1` 开始。
+```cpp
+const int MOD = 100003;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<vector<int>> g(n + 1);
+    for (int i = 0; i < m; i++) {
+        int x, y;
+        cin >> x >> y;
+        g[x].push_back(y);
+        g[y].push_back(x);
+    }
+
+    vector<int> dist(n + 1, -1);
+    vector<int> cnt(n + 1, 0);
+
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+    cnt[1] = 1;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (int v : g[u]) {
+            //BFS 特性，第一次访问就是最短路
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                cnt[v] = cnt[u];
+                q.push(v);
+            } else if (dist[v] == dist[u] + 1) {
+                cnt[v] = (cnt[v] + cnt[u]) % MOD;//注意不要分两步，防止数据溢出
+                //这里不 push (v) 进队列！ v 已经进过队列，BFS 不需要重复入队。
+            }
+        }
+    }
+
+    for (int i = 1; i <= n; i++) {
+        cout << cnt[i] << endl;
+    }
+
+    return 0;
+}
+```
+# U. 灾后重建【图论，最短路，Floyd算法】
+每个村庄有一个重建完成时间，只有重建完成的村庄才能作为路径上的点。
+查询 `(x, y, t)` 时，只能使用重建时间不超过 `t` 的村庄。可以按时间顺序逐步把村庄加入 Floyd。
+
+维护一个指针 `k`，表示已经加入了哪些村庄作为中转点。对于每个查询，把所有 `time[k] <= t` 的村庄加入 Floyd 更新。
+
+- `d[i][j]` 表示当前可用村庄条件下的最短路。
+- 村庄按编号给出，并且重建时间通常非降序。
+- 对于每个查询时间 `t`，不断加入重建时间 `<= t` 的村庄。
+- 如果起点或终点还没重建，或者不可达，输出 `-1`。
+
+```
+普通 Floyd：d[i][j]=min(d[i][j], d[i][k]+d[k][j])，k代表中转结点。
+传统 Floyd 写法：外层循环枚举中转点 k，把 k 允许作为中间点，更新所有 i,j 最短路。
+
+本题巧妙思想：按重建时间从小到大，逐步把村庄作为 Floyd 的中转点 k 放进去。
+查询给一个时间`t`，所有重建时间 ≤ t 的村庄，才允许充当路径中转点。
+```
+```cpp
+const int N = 205;
+const int INF = 1e9;
+
+int t[N];
+int d[N][N];
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    for (int i = 0; i < n; i++) {
+        cin >> t[i];
+    }
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            //村庄没重建好，就不能出现在路径当中
+            d[i][j] = (i == j ? 0 : INF);
+        }
+    }
+
+    for (int i = 0; i < m; i++) {
+        int x, y, w;
+        cin >> x >> y >> w;
+        //无向边双向赋值；多条边取最小值。
+        d[x][y] = d[y][x] = min(d[x][y], w);
+    }
+
+    int q;
+    cin >> q;
+
+    int now = 0;
+    while (q--) {
+        int x, y, queryTime;
+        cin >> x >> y >> queryTime;
+        //村庄没重建好，就不能出现在路径当中
+        //把所有重建时间 <= 当前查询时间的村庄，全部加入Floyd中转
+        while (now < n && t[now] <= queryTime) {
+            // now这个村庄开放，允许作为中转点k=now，更新全图最短路
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    d[i][j] = min(d[i][j], d[i][now] + d[now][j]);
+                }
+            }
+            now++;
+        }
+
+        if (t[x] > queryTime || t[y] > queryTime || d[x][y] == INF) {
+            cout << -1 << endl;
+        } else {
+            cout << d[x][y] << endl;
+        }
+    }
+
+    return 0;
+}
+```
+# V. 繁忙的都市【最小生成树问题+Kruskal+并查集】(**)
+题目要求选择一些道路连接所有路口，并且让选中道路中的**最大边权尽可能小**。
+
+这可以用**最小生成树**解决。**Kruskal 算法**按边权从小到大选边，当所有点连通时，最后选中的边权就是答案。
+- 按道路权值从小到大排序。
+- 用**并查集**维护连通性。
+- 如果一条边连接两个不同连通块，就选它。
+- 选够 `n - 1` 条边后结束。
+
+从小到大选边，优先用代价小的边合并连通块；当全部点连通时，此时树里面最大那条边，就是满足连通所有点的条件下，能取得的最小的最大值。
+![](./数据结构/img/v1.png)
+```cpp
+struct Edge {
+    int x, y, w;
+};
+
+int fa[305];
+
+int find(int x) {
+    return fa[x] == x ? x : fa[x] = find(fa[x]);
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+
+    vector<Edge> e(m);
+    for (int i = 0; i < m; i++) {
+        cin >> e[i].x >> e[i].y >> e[i].w;
+    }
+    //把所有边按照权值 w 从小到大排序，Kruskal 的核心步骤，优先选权值小的边。
+    sort(e.begin(), e.end(), [](Edge a, Edge b) {
+        return a.w < b.w;
+    });
+
+    for (int i = 1; i <= n; i++) {
+        fa[i] = i;
+    }
+
+    int cnt = 0;
+    int ans = 0;
+
+    for (auto edge : e) {
+        int fx = find(edge.x);
+        int fy = find(edge.y);
+        //两个点不在同一个连通块，这条边可以选
+        if (fx != fy) {
+            fa[fx] = fy;
+            cnt++;
+            ans = edge.w;//更新答案，因为边从小到大，新选的边一定是当前最大
+
+            //一旦选够 `n‑1` 条边，最小生成树完成，直接 break，不用遍历剩余边。
+            if (cnt == n - 1) {
+                break;
+            }
+        }
+    }
+    // 一共选`n‑1`条道路，以及选中道路中最大权值`ans`。
+    cout << n - 1 << " " << ans << endl;
     return 0;
 }
 ```

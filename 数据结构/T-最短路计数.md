@@ -54,14 +54,16 @@ int main() {
     while (!q.empty()) {
         int u = q.front();
         q.pop();
-
+        
         for (int v : g[u]) {
+            //BFS 特性，第一次访问就是最短路
             if (dist[v] == -1) {
                 dist[v] = dist[u] + 1;
                 cnt[v] = cnt[u];
                 q.push(v);
             } else if (dist[v] == dist[u] + 1) {
                 cnt[v] = (cnt[v] + cnt[u]) % MOD;
+                //这里不 push (v) 进队列！ v 已经进过队列，BFS 不需要重复入队。
             }
         }
     }
