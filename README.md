@@ -51,6 +51,10 @@
 - [T. 最短路计数【图论，BFS】](#t-最短路计数图论bfs)
 - [U. 灾后重建【图论，最短路，Floyd算法】](#u-灾后重建图论最短路floyd算法)
 - [V. 繁忙的都市【最小生成树问题+Kruskal+并查集】(\*\*)](#v-繁忙的都市最小生成树问题kruskal并查集)
+- [W. 采药【DP，01背包】](#w-采药dp01背包)
+- [X. 最大子段和【dp】](#x-最大子段和dp)
+- [Y. 两个排列的最长公共子序列](#y-两个排列的最长公共子序列)
+- [Z. 过河卒](#z-过河卒)
 # 语法基础题
 # B题 上学迟到【向上取整公式】
 ```cpp
@@ -2309,6 +2313,184 @@ int main() {
     }
     // 一共选`n‑1`条道路，以及选中道路中最大权值`ans`。
     cout << n - 1 << " " << ans << endl;
+    return 0;
+}
+```
+# W. 采药【DP，01背包】
+这是 01 背包问题。每株草药只能采一次，有采药时间和价值，要求在总时间不超过 `T` 的情况下获得最大价值。
+
+设 `dp[j]` 表示总时间不超过 `j` 时能获得的最大价值。
+
+对于每株草药，从大到小枚举时间，避免同一株草药被重复选择。
+
+- 读入总时间 `T` 和草药数量 `m`。
+- 对每株草药读入时间 `cost` 和价值 `value`。
+- 倒序枚举 `j`：
+
+```text
+dp[j] = max(dp[j], dp[j - cost] + value)
+```
+```cpp
+#include <iostream>
+using namespace std;
+
+int dp[1005];
+
+int main() {
+    int T, m;
+    cin >> T >> m;
+
+    for (int i = 1; i <= m; i++) {
+        int cost, value;
+        cin >> cost >> value;
+
+        for (int j = T; j >= cost; j--) {
+            dp[j] = max(dp[j], dp[j - cost] + value);
+        }
+    }
+
+    cout << dp[T] << endl;
+    return 0;
+}
+```
+# X. 最大子段和【dp】
+最大子段和要求在一个序列中找到和最大的连续子序列。
+
+用动态规划维护 `cur`：表示以当前位置结尾的最大子段和。
+
+对于当前数 `a[i]`：
+
+```text
+cur = max(a[i], cur + a[i])
+```
+
+答案就是所有 `cur` 的最大值。
+
+- 如果前面的和为负数，就不如从当前位置重新开始。
+- 每次更新当前最大子段和。
+- 注意全负数情况，答案应该是最大的那个负数。
+
+```cpp
+int main() {
+    int n;
+    cin >> n;
+
+    long long x;
+    cin >> x;
+
+    long long cur = x;
+    long long ans = x;
+
+    for (int i = 2; i <= n; i++) {
+        cin >> x;
+        cur = max(x, cur + x);
+        ans = max(ans, cur);
+    }
+
+    cout << ans << endl;
+    return 0;
+}
+```
+# Y. 两个排列的最长公共子序列
+两个序列都是排列时，可以把最长公共子序列转化为最长上升子序列。
+
+先记录第一个排列中每个数的位置 `pos[x]`。然后把第二个排列中的每个数 `b[i]` 转换成 `pos[b[i]]`。
+
+这样问题变成：在转换后的序列中求最长上升子序列长度。
+
+
+- `pos[x]` 表示 `x` 在第一个排列中的位置。
+- 将第二个排列转换为位置序列。
+- 对位置序列求 LIS。
+- 用 `lower_bound` 优化到 `O(n log n)`。
+
+```cpp
+const int N = 100005;
+
+int pos[N];
+
+int main() {
+    int n;
+    cin >> n;
+
+    for (int i = 1; i <= n; i++) {
+        int x;
+        cin >> x;
+        pos[x] = i;
+    }
+
+    vector<int> lis;
+    for (int i = 1; i <= n; i++) {
+        int x;
+        cin >> x;
+        int v = pos[x];
+
+        auto it = lower_bound(lis.begin(), lis.end(), v);
+        if (it == lis.end()) {
+            lis.push_back(v);
+        } else {
+            *it = v;
+        }
+    }
+
+    cout << lis.size() << endl;
+    return 0;
+}
+```
+# Z. 过河卒
+卒从 `(0, 0)` 走到 `(n, m)`，每次只能向右或向下走。棋盘上有马控制的位置不能经过。
+
+先标记马所在位置和马能攻击到的位置，这些位置都不能走。
+
+然后用动态规划统计路径数：
+
+```text
+dp[i][j] = dp[i - 1][j] + dp[i][j - 1]
+```
+
+如果 `(i, j)` 被马控制，则 `dp[i][j] = 0`。
+
+
+- 坐标从 `0` 开始，可以整体加 `1` 避免边界问题。
+- 标记马的位置和 8 个攻击位置。
+- 从起点开始递推。
+- 路径数可能较大，使用 `long long`。
+
+```cpp
+const int N = 25;
+
+bool blocked[N][N];
+long long dp[N][N];
+
+int dx[9] = {0, 1, 1, 2, 2, -1, -1, -2, -2};
+int dy[9] = {0, 2, -2, 1, -1, 2, -2, 1, -1};
+
+int main() {
+    int n, m, hx, hy;
+    cin >> n >> m >> hx >> hy;
+
+    n++, m++, hx++, hy++;
+
+    for (int i = 0; i < 9; i++) {
+        int x = hx + dx[i];
+        int y = hy + dy[i];
+        if (x >= 1 && x <= n && y >= 1 && y <= m) {
+            blocked[x][y] = true;
+        }
+    }
+
+    dp[1][1] = blocked[1][1] ? 0 : 1;
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            if (blocked[i][j] || (i == 1 && j == 1)) {
+                continue;
+            }
+            dp[i][j] = dp[i - 1][j] + dp[i][j - 1];
+        }
+    }
+
+    cout << dp[n][m] << endl;
     return 0;
 }
 ```
